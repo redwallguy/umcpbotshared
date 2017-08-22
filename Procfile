@@ -1,1 +1,1 @@
-web: python umcpgaming.py
+web: python umcpbot.py
