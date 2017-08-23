@@ -1,1 +1,1 @@
-web: python umcpbot.py
+worker: python bot.py
