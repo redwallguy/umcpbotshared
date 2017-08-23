@@ -18,7 +18,7 @@ async def on_message(message):
     if(message.content.startswith('!addgame')):
         parsed = list(set(parsed[1:]))
         if(message.channel.id != rolerequest):
-            await client.send_message(message.channel, 'Keep all role requests in the <#348933488746954752> channel!')
+            await client.send_message(message.channel, 'Keep all role requests in the <#' + rolerequest + '> channel!')
             return
 
         for role in roles:
