@@ -7,7 +7,7 @@ server = '349777729861976064'
 rolerequest = '349777729861976065'
 #release server variables
 server = '348919724635324419'
-rolerequest = '348933488746954752'
+rolerequest = '349781614877999104'
 roles = []
 
 @client.event
