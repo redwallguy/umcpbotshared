@@ -9,24 +9,31 @@ roles = []
 @client.event
 async def on_message(message):
     parsed = message.content.split()
+    user_roles = message.author.roles
 
     if(message.content.startswith('!addgame')):
+        parsed = list(set(parsed))
         if(message.channel.id != rolerequest):
             await client.send_message(message.channel, 'Keep all role requests in the <#348933488746954752> channel!')
             return
 
         for role in roles:
+            if role in user_roles:
+                continue
             for i in range(1, len(parsed)):
                 if(role.name == parsed[i] and role.name != 'Admin' and role.name != 'Bot'):
                     await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + parsed[i] + '...')
                     await client.add_roles(message.author, role)
 
     if(message.content.startswith('!removegame')):
+        parsed = list(set(parsed))
         if(message.channel.id != rolerequest):
             await client.send_message(message.channel, 'Keep all role requests in the <#348933488746954752> channel!')
             return
 
         for role in roles:
+            if role not in user_roles:
+                continue
             for i in range(1, len(parsed)):
                 if(role.name == parsed[i] and role.name != 'Admin' and role.name != 'Bot'):
                     await client.send_message(message.channel, 'Removing ' + message.author.name + ' from ' + parsed[i] + '...')
@@ -38,6 +45,8 @@ async def on_message(message):
 !help - Displays this message
 !addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels
 !removegame [game] <game> <game> ... - Remove the game role(s)
+
+We support @overwatch, @league, @smash, @rocketleague, @heroes, @starcraft, and @hearthstone
 ```
 
         """
