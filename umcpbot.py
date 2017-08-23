@@ -2,6 +2,10 @@ import discord
 import asyncio
 
 client = discord.Client()
+#test server variables
+server = '349777729861976064'
+rolerequest = '349777729861976065'
+#release server variables
 server = '348919724635324419'
 rolerequest = '348933488746954752'
 roles = []
@@ -12,7 +16,7 @@ async def on_message(message):
     user_roles = message.author.roles
 
     if(message.content.startswith('!addgame')):
-        parsed = list(set(parsed))
+        parsed = list(set(parsed[1:]))
         if(message.channel.id != rolerequest):
             await client.send_message(message.channel, 'Keep all role requests in the <#348933488746954752> channel!')
             return
@@ -20,13 +24,13 @@ async def on_message(message):
         for role in roles:
             if role in user_roles:
                 continue
-            for i in range(1, len(parsed)):
+            for i in range(len(parsed)):
                 if(role.name == parsed[i] and role.name != 'Admin' and role.name != 'Bot'):
                     await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + parsed[i] + '...')
                     await client.add_roles(message.author, role)
 
     if(message.content.startswith('!removegame')):
-        parsed = list(set(parsed))
+        parsed = list(set(parsed[1:]))
         if(message.channel.id != rolerequest):
             await client.send_message(message.channel, 'Keep all role requests in the <#348933488746954752> channel!')
             return
@@ -34,7 +38,7 @@ async def on_message(message):
         for role in roles:
             if role not in user_roles:
                 continue
-            for i in range(1, len(parsed)):
+            for i in range(len(parsed)):
                 if(role.name == parsed[i] and role.name != 'Admin' and role.name != 'Bot'):
                     await client.send_message(message.channel, 'Removing ' + message.author.name + ' from ' + parsed[i] + '...')
                     await client.remove_roles(message.author, role)
