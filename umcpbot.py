@@ -16,7 +16,7 @@ async def on_message(message):
     user_roles = message.author.roles
 
     if(message.content.startswith('!addgame')):
-        parsed = list(set(parsed[1:]))
+        parsed = [x.lower() for x in list(set(parsed[1:]))]
         if(message.channel.id != rolerequest):
             await client.send_message(message.channel, 'Keep all role requests in the <#' + rolerequest + '> channel!')
             return
@@ -30,7 +30,7 @@ async def on_message(message):
                     await client.add_roles(message.author, role)
 
     if(message.content.startswith('!removegame')):
-        parsed = list(set(parsed[1:]))
+        parsed = [x.lower() for x in list(set(parsed[1:]))]
         if(message.channel.id != rolerequest):
             await client.send_message(message.channel, 'Keep all role requests in the <#' + rolerequest + '> channel!')
             return
