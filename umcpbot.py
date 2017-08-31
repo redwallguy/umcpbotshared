@@ -50,7 +50,7 @@ async def on_message(message):
 !addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels
 !removegame [game] <game> <game> ... - Remove the game role(s)
 
-We support @overwatch, @league, @smash, @rocketleague, @heroes, @starcraft, @hearthstone, and @csgo
+We support @overwatch, @league, @smash, @rocketleague, @heroes, @starcraft, @hearthstone, @csgo, and @pubg
 ```
 
         """
