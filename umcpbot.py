@@ -54,9 +54,6 @@ async def on_message(message):
             if not found:
                 incorrect_syntax = True
 
-        if(incorrect_syntax):
-            await client.send_message(message.channel, help_message)
-
     elif(message.content.startswith('!removegame')):
         parsed = [x.lower() for x in list(set(parsed[1:]))]
         if(message.channel.id != rolerequest):
