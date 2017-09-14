@@ -37,16 +37,17 @@ async def on_message(message):
             return
 
         incorrect_syntax = False
-        not_found = False
+        not_found = True
 
         for role in roles:
             if role in user_roles:
                 continue
             for i in range(len(parsed)):
                 if parsed[i] == "hots":
+                    not_found = False
                     parsed[i] = "heroes"
                 if(role.name == parsed[i] and role.name != 'Admin' and role.name != 'Bot'):
-                    not_found = True
+                    not_found = False
                     await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + parsed[i] + '...')
                     await client.add_roles(message.author, role)
 
