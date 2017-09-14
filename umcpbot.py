@@ -51,7 +51,7 @@ async def on_message(message):
                     await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + parsed[i] + '...')
                     await client.add_roles(message.author, role)
 
-            if not not_found:
+            if not_found:
                 incorrect_syntax = True
 
         if(incorrect_syntax):
