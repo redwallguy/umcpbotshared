@@ -3,12 +3,8 @@ import asyncio
 
 client = discord.Client()
 #test server variables
-server = '349777729861976064'
-rolerequest = '349777729861976065'
-#release server variables
-server = '348919724635324419'
-rolerequest = '349781614877999104'
 roles = []
+renamed_channels = {}
 
 @client.event
 async def on_message(message):
@@ -45,26 +41,29 @@ async def on_message(message):
 
 
     elif(message.content.startswith('!help')):
-        s = """ ```Markdown
-!help - Displays this message
-!addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels
-!removegame [game] <game> <game> ... - Remove the game role(s)
-
-We support @overwatch, @league, @smash, @rocketleague, @heroes, @starcraft, @hearthstone, @csgo, @pubg, and @destiny
-```
-
-        """
+        s = """ ```Markdown\n!help - Displays this message\n"""
+        s = s + """!addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels\n"""
+        s = s + """!removegame [game] <game> <game> ... - Remove the game role(s)\n\nWe support """
+        for role in roles[1:-1]:
+            if role.name != "Admin" and role.name != "Games Board" and role.name != "Bot":
+                s = s + "@" + role.name + ","
+        s = s + " and @" + roles[-1].name
+        s = s + """\n```"""
         await client.send_message(message.channel, s)
 
 
 @client.event
 async def on_ready():
     global roles, server
-    server = client.get_server(server)
+    print(client.servers)
+    server = list(client.servers)[0]
     roles = server.roles
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
+
+
+
 
 client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY')
