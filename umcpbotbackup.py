@@ -3,6 +3,11 @@ import asyncio
 
 client = discord.Client()
 #test server variables
+server = '349777729861976064'
+rolerequest = '349777729861976065'
+#release server variables
+server = '348919724635324419'
+rolerequest = '349781614877999104'
 roles = []
 renamed_channels = {}
 
@@ -41,28 +46,55 @@ async def on_message(message):
 
 
     elif(message.content.startswith('!help')):
-        s = """ ```Markdown\n!help - Displays this message\n"""
-        s = s + """!addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels\n"""
-        s = s + """!removegame [game] <game> <game> ... - Remove the game role(s)\n\nWe support """
-        for role in roles[1:-1]:
-            if role.name != "Admin" and role.name != "Games Board" and role.name != "Bot":
-                s = s + "@" + role.name + ","
-        s = s + " and @" + roles[-1].name
-        s = s + """\n```"""
+        s = """ ```Markdown
+!help - Displays this message
+!addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels
+!removegame [game] <game> <game> ... - Remove the game role(s)
+
+We support @overwatch, @league, @smash, @rocketleague, @heroes, @starcraft, @hearthstone, @csgo, @pubg, and @destiny
+```
+
+        """
         await client.send_message(message.channel, s)
 
 
 @client.event
 async def on_ready():
     global roles, server
-    print(client.servers)
-    server = list(client.servers)[0]
+    server = client.get_server(server)
     roles = server.roles
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
 
+async def update_gamelobby_name(channel, members):
+    member_roles = {}
+    for member in members:
+        for role in member.roles:
+            if not role.is_everyone:
+                if role in member_roles:
+                    member_roles[role] = member_roles[role] + 1
+                else:
+                    member_roles[role] = 1
+
+    max_role = max(member_roles, key=lambda k: member_roles[k])
+    await client.edit_channel()
+
+@client.event
+async def on_voice_state_update(before, after):
+    if(after.voice.voice_channel is not None):
+        members = after.voice.voice_channel.voice_members
+        await update_gamelobby_name(after.voice.voice_channel, members)
+
+    if(before.voice.voice_channel is not None):
+        members = before.voice.voice_channel.voice_members
+        id = before.voice.voice_channel.id
+        if (len(members) == 0 and renamed_channels.has_key(id)):
+            await client.edit_channel(before.voice.voice_channel, name=renamed_channels[id])
+            renamed_channel.pop(id)
+        else
+            await update_gamelobby_name(before.voice.voice_channel, members)
 
 
 
