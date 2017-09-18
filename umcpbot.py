@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import time
 
 servername = "UMCP Gaming"
 client = discord.Client()
@@ -7,6 +8,8 @@ client = discord.Client()
 rolerequest = ""
 roles = []
 renamed_channels = {}
+
+
 
 @client.event
 async def on_message(message):
@@ -19,6 +22,9 @@ async def on_message(message):
             await client.send_message(message.channel, 'Keep all role requests in the <#' + rolerequest + '> channel!')
             return
 
+        incorrect_syntax = False
+        found = False
+
         for role in roles:
             if role in user_roles:
                 continue
@@ -27,7 +33,10 @@ async def on_message(message):
                     await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + parsed[i] + '...')
                     await client.add_roles(message.author, role)
 
-    if(message.content.startswith('!removegame')):
+            if not found:
+                incorrect_syntax = True
+
+    elif(message.content.startswith('!removegame')):
         parsed = [x.lower() for x in list(set(parsed[1:]))]
         if(message.channel.id != rolerequest):
             await client.send_message(message.channel, 'Keep all role requests in the <#' + rolerequest + '> channel!')
