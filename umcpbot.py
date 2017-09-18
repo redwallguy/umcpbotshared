@@ -1,8 +1,10 @@
 import discord
 import asyncio
 
+servername = "UMCP Gaming"
 client = discord.Client()
 #test server variables
+rolerequest = ""
 roles = []
 renamed_channels = {}
 
@@ -21,7 +23,7 @@ async def on_message(message):
             if role in user_roles:
                 continue
             for i in range(len(parsed)):
-                if(role.name == parsed[i] and role.name != 'Admin' and role.name != 'Bot'):
+                if(role.name.lower() == parsed[i]):
                     await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + parsed[i] + '...')
                     await client.add_roles(message.author, role)
 
@@ -35,7 +37,7 @@ async def on_message(message):
             if role not in user_roles:
                 continue
             for i in range(len(parsed)):
-                if(role.name == parsed[i] and role.name != 'Admin' and role.name != 'Bot'):
+                if(role.name.lower() == parsed[i]):
                     await client.send_message(message.channel, 'Removing ' + message.author.name + ' from ' + parsed[i] + '...')
                     await client.remove_roles(message.author, role)
 
@@ -44,26 +46,61 @@ async def on_message(message):
         s = """ ```Markdown\n!help - Displays this message\n"""
         s = s + """!addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels\n"""
         s = s + """!removegame [game] <game> <game> ... - Remove the game role(s)\n\nWe support """
-        for role in roles[1:-1]:
-            if role.name != "Admin" and role.name != "Games Board" and role.name != "Bot":
-                s = s + "@" + role.name + ","
-        s = s + " and @" + roles[-1].name
+        for role in roles[:-1]:
+            s = s + role.name + ", "
+        s = s + "and " + roles[-1].name
         s = s + """\n```"""
         await client.send_message(message.channel, s)
+
+@client.event
+async def on_member_join(member):
+    s = "Welcome to UMCP Gaming, " + member.mention + "!\nLooks like you haven't added any games yet! It must seem pretty empty here.\n"
+    s = s + "Head over to <#349781614877999104> and add your first game. "
+    s = s + "After you do that, <#358005392648962059> will disappear and you will be able to engage with the communities that you choose to be in!\n"
+    s = s + "Happy gaming!"
+    await client.send_message(member, s)
+
 
 
 @client.event
 async def on_ready():
-    global roles, server
-    print(client.servers)
-    server = list(client.servers)[0]
-    roles = server.roles
+    global roles, server, rolerequest
+    server = discord.utils.find(lambda s: s.name == servername, client.servers)
+    updateRoles(server)
+    rolerequest = discord.utils.find(lambda c: c.name == "role-request", server.channels).id
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
 
 
+### Automatically update roles
+
+@client.event
+async def on_server_role_create(role):
+    updateRoles(server)
+
+@client.event
+async def on_server_role_delete(role):
+    updateRoles(server)
+
+@client.event
+async def on_server_role_update(before, after):
+    updateRoles(server)
 
 
-client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8')
+
+def updateRoles(s):
+    global roles
+    roles = s.role_hierarchy
+    i = 0
+    for role in roles:
+        if role.name == "Bot":
+            roles = roles[i+1:-1]
+            roles = [r for r in roles if not ' ' in r.name]
+            break
+        i += 1
+
+
+client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
+### client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
