@@ -47,8 +47,8 @@ async def on_message(message):
         s = s + """!addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels\n"""
         s = s + """!removegame [game] <game> <game> ... - Remove the game role(s)\n\nWe support """
         for role in roles[:-1]:
-            s = s + "@" + role.name + ", "
-        s = s + "and @" + roles[-1].name
+            s = s + role.name + ", "
+        s = s + "and " + roles[-1].name
         s = s + """\n```"""
         await client.send_message(message.channel, s)
 
