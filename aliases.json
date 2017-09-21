@@ -1,0 +1,10 @@
+{
+  "dota": ["dota2"],
+  "league": ["lol"],
+  "rocketleague": ["rl"],
+  "heroes": ["hots"],
+  "smash": ["melee","sm4sh","brawl"],
+  "overwatch": ["ow"],
+  "starcraft": ["sc", "sc2"]
+}
+
