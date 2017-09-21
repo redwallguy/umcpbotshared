@@ -2,14 +2,12 @@ import discord
 import asyncio
 import time
 
-servername = "UMCP Gaming"
+servername = "chilledtoadtestserver"
 client = discord.Client()
 #test server variables
 rolerequest = ""
 roles = []
 renamed_channels = {}
-
-
 
 @client.event
 async def on_message(message):
@@ -82,6 +80,42 @@ async def on_ready():
     print(client.user.id)
     print('------')
 
+### Automatic voice channel names
+
+async def update_gamelobby_name(channel, members):
+    member_games = {}
+    for member in members:
+        if member.game is not None:
+            if member.game in member_games:
+               member_games[member.game] = member_games[member.game] + 1
+            else:
+                member_games[member.game] = 1
+    max_game = max(member_games, key=lambda k: member_games[k])
+    await client.edit_channel(channel, name=max_game.name)
+
+@client.event
+async def on_voice_state_update(before, after):
+    if(after.voice.voice_channel is not None):
+        members = after.voice.voice_channel.voice_members
+        id = after.voice.voice_channel.id
+        if "Game Lobby" in after.voice_channel.name or id in renamed_channels:
+            if id not in renamed_channels:
+                renamed_channels[id] = after.voice.voice_channel.name
+
+            await update_gamelobby_name(after.voice.voice_channel, members)
+
+    if(before.voice.voice_channel is not None):
+        members = before.voice.voice_channel.voice_members
+        id = before.voice.voice_channel.id
+        if id in renamed_channels:
+            if len(members) == 0:
+                await client.edit_channel(before.voice.voice_channel, name=renamed_channels[id])
+                print(renamed_channels)
+                renamed_channels.pop(id)
+                print(renamed_channels)
+            else:
+                await update_gamelobby_name(before.voice.voice_channel, members)
+
 
 ### Automatically update roles
 
@@ -111,5 +145,5 @@ def updateRoles(s):
         i += 1
 
 
-client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
-### client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
+### client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
+client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
