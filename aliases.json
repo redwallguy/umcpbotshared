@@ -3,8 +3,11 @@
   "league": ["lol"],
   "rocketleague": ["rl"],
   "heroes": ["hots"],
-  "smash": ["melee","sm4sh","brawl"],
+  "smash": ["melee","sm4sh","brawl","pm"],
   "overwatch": ["ow"],
-  "starcraft": ["sc", "sc2"]
+  "starcraft": ["sc", "sc2"],
+  "csgo": ["cs", "counterstrike"],
+  "pubg": ["battlegrounds"],
+  "hearthstone": ["hs"],
+  "runescape": ["osrs", "07scape"]
 }
-

@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import time
+import json
 
 servername = "chilledtoadtestserver"
 client = discord.Client()
@@ -8,6 +9,7 @@ client = discord.Client()
 rolerequest = ""
 roles = []
 renamed_channels = {}
+aliases = {}
 
 @client.event
 async def on_message(message):
@@ -20,19 +22,19 @@ async def on_message(message):
             await client.send_message(message.channel, 'Keep all role requests in the <#' + rolerequest + '> channel!')
             return
 
-        incorrect_syntax = False
-        found = False
-
-        for role in roles:
-            if role in user_roles:
-                continue
-            for i in range(len(parsed)):
+        for i in range(len(parsed)):
+            for role in roles:
+                add_role = ""
                 if(role.name.lower() == parsed[i]):
-                    await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + parsed[i] + '...')
-                    await client.add_roles(message.author, role)
+                    add_role = parsed[i]
+                keys = [key for key, value in aliases.items() if parsed[i] in
+                        value]
+                if keys:
+                    add_role = keys[0] if keys[0] == role.name.lower() else add_role
 
-            if not found:
-                incorrect_syntax = True
+                if add_role:
+                    await client.send_message(message.channel, 'Adding ' + message.author.name + ' to ' + add_role + '...')
+                    await client.add_roles(message.author, role)
 
     elif(message.content.startswith('!removegame')):
         parsed = [x.lower() for x in list(set(parsed[1:]))]
@@ -44,8 +46,16 @@ async def on_message(message):
             if role not in user_roles:
                 continue
             for i in range(len(parsed)):
+                add_role = ""
                 if(role.name.lower() == parsed[i]):
-                    await client.send_message(message.channel, 'Removing ' + message.author.name + ' from ' + parsed[i] + '...')
+                    add_role = parsed[i]
+                keys = [key for key, value in aliases.items() if parsed[i] in
+                        value]
+                if keys:
+                    add_role = keys[0] if keys[0] == role.name.lower() else add_role
+
+                if add_role:
+                    await client.send_message(message.channel, 'Removing ' + message.author.name + ' from ' + add_role + '...')
                     await client.remove_roles(message.author, role)
 
 
@@ -71,10 +81,13 @@ async def on_member_join(member):
 
 @client.event
 async def on_ready():
-    global roles, server, rolerequest
+    global roles, server, rolerequest, aliases
     server = discord.utils.find(lambda s: s.name == servername, client.servers)
     updateRoles(server)
     rolerequest = discord.utils.find(lambda c: c.name == "role-request", server.channels).id
+    with open('aliases.json') as data_file:
+        aliases = json.load(data_file)
+    print(aliases)
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
