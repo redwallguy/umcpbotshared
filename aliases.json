@@ -9,5 +9,6 @@
   "csgo": ["cs", "counterstrike"],
   "pubg": ["battlegrounds"],
   "hearthstone": ["hs"],
-  "runescape": ["osrs", "07scape"]
+  "runescape": ["osrs", "07scape"],
+  "rhythm": ["osu", "guitar", "rythm", "stepmania", "mania", "o2jam", "lunatic"]
 }
