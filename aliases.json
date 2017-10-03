@@ -10,5 +10,6 @@
   "pubg": ["battlegrounds"],
   "hearthstone": ["hs"],
   "runescape": ["osrs", "07scape"],
-  "rhythm": ["osu", "guitar", "rythm", "stepmania", "mania", "o2jam", "lunatic"]
+  "rhythm": ["osu", "guitar", "rythm", "stepmania", "mania", "o2jam", "lunatic"],
+  "sandbox": ["minecraft", "terraria", "starbound"]
 }
