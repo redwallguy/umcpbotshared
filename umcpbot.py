@@ -3,8 +3,8 @@ import asyncio
 import time
 import json
 
-# servername = "UMCP Gaming"
-servername = "chilledtoadtestserver"
+servername = "UMCP Gaming"
+# servername = "chilledtoadtestserver"
 client = discord.Client()
 #test server variables
 rolerequest = ""
@@ -127,5 +127,5 @@ async def on_ready():
     print('------')
 
 
-# client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
-client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
+client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
+# client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
