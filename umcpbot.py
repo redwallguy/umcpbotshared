@@ -3,7 +3,8 @@ import asyncio
 import time
 import json
 
-servername = "UMCP Gaming"
+# servername = "UMCP Gaming"
+servername = "chilledtoadtestserver"
 client = discord.Client()
 #test server variables
 rolerequest = ""
@@ -76,23 +77,6 @@ async def on_member_join(member):
     s = s + "Happy gaming!"
     await client.send_message(member, s)
 
-
-
-@client.event
-async def on_ready():
-    global roles, server, rolerequest, aliases
-    server = discord.utils.find(lambda s: s.name == servername, client.servers)
-    updateRoles(server)
-    rolerequest = discord.utils.find(lambda c: c.name == "role-request", server.channels).id
-    with open('aliases.json') as data_file:
-        aliases = json.load(data_file)
-    print(aliases)
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print('------')
-
-
 ### Automatically update roles
 
 @client.event
@@ -108,7 +92,6 @@ async def on_server_role_update(before, after):
     updateRoles(server)
 
 
-
 def updateRoles(s):
     global roles
     roles = s.role_hierarchy
@@ -120,6 +103,29 @@ def updateRoles(s):
             break
         i += 1
 
+@client.event
+async def on_member_update(before, after):
+    if(before.game):
+        if((not after.game or after.game.type != 1) and before.game.type == 1):
+            await client.remove_roles(after, discord.utils.find(lambda r: r.name == "Now Streaming", server.roles))
+    elif(after.game):
+        if((not before.game or before.game.type != 1) and after.game.type == 1):
+            await client.add_roles(after, discord.utils.find(lambda r: r.name == "Now Streaming", server.roles))
 
-client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
-###client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
+
+@client.event
+async def on_ready():
+    global roles, server, rolerequest, aliases
+    server = discord.utils.find(lambda s: s.name == servername, client.servers)
+    updateRoles(server)
+    rolerequest = discord.utils.find(lambda c: c.name == "role-request", server.channels).id
+    with open('aliases.json') as data_file:
+        aliases = json.load(data_file)
+    print('Logged in as')
+    print(client.user.name)
+    print(client.user.id)
+    print('------')
+
+
+# client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
+client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
