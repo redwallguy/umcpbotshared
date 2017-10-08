@@ -108,10 +108,9 @@ async def on_member_update(before, after):
     if(before.game):
         if((not after.game or after.game.type != 1) and before.game.type == 1):
             await client.remove_roles(after, discord.utils.find(lambda r: r.name == "Now Streaming", server.roles))
-    elif(after.game):
+    if(after.game):
         if((not before.game or before.game.type != 1) and after.game.type == 1):
             await client.add_roles(after, discord.utils.find(lambda r: r.name == "Now Streaming", server.roles))
-
 
 @client.event
 async def on_ready():
