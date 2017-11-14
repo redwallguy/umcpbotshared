@@ -1,10 +1,11 @@
 import discord
 import asyncio
 import time
+import datetime
 import json
 
-# servername = "UMCP Gaming"
-servername = "chilledtoadtestserver"
+servername = "UMCP Gaming"
+# servername = "chilledtoadtestserver"
 client = discord.Client()
 #test server variables
 rolerequest = ""
@@ -17,7 +18,8 @@ stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
 async def update_stats():
     global stats
     await client.wait_until_ready()
-    channel = discord.Object(id='359383601433018379')
+    server = discord.utils.find(lambda s: s.name == servername, client.servers)
+    channel = discord.utils.find(lambda c: c.name == "stats", server.channels)
     while not client.is_closed:
         if len(stats["channels"]) > 0 and len(stats["members"]) > 0:
             topchannel = max(stats["channels"].keys(), key=(lambda k: stats["channels"][k]))
@@ -32,7 +34,9 @@ async def update_stats():
             await client.send_message(channel, embed=em)
         # reset stats
         stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
-        await asyncio.sleep(20)
+        today = datetime.datetime.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        await asyncio.sleep((tomorrow-today).seconds)
 
 @client.event
 async def on_message(message):
@@ -166,5 +170,5 @@ async def on_ready():
 #start stats loop
 client.loop.create_task(update_stats())
 
-# client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
-client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
+client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
+# client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
