@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import time
+import datetime
 import json
 
 servername = "UMCP Gaming"
@@ -10,9 +11,49 @@ client = discord.Client()
 rolerequest = ""
 roles = []
 aliases = {}
+stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
+
+# Stats
+
+async def update_stats():
+    global stats
+    await client.wait_until_ready()
+    server = discord.utils.find(lambda s: s.name == servername, client.servers)
+    channel = discord.utils.find(lambda c: c.name == "stats", server.channels)
+    while not client.is_closed:
+        if len(stats["channels"]) > 0 and len(stats["members"]) > 0:
+            topchannel = max(stats["channels"].keys(), key=(lambda k: stats["channels"][k]))
+            topmember = max(stats["members"].keys(), key=(lambda k: stats["members"][k]))
+            embed_message = "__**Most Active Member:**__\t\t" + topmember.mention + " with " + str(stats["members"][topmember])
+            embed_message+= " messages sent!\n__**Most Active Channel:**__\t\t" + topchannel.mention + " with "
+            embed_message+= str(stats["channels"][topchannel]) + " messages sent!\nThere were a total of " + str(stats["messages"])
+            embed_message+= " messages sent today!\n\n" + str(stats["newmembers"]) + " new members joined today! Welcome!\n__**Total Members:**__\t" + str(len(server.members))
+
+            em = discord.Embed(title='Today\'s Stats', description=embed_message, colour=0xFF0000)
+            em.set_author(name='UMCP Gaming', icon_url=client.user.avatar_url)
+            await client.send_message(channel, embed=em)
+        # reset stats
+        stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
+        today = datetime.datetime.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        await asyncio.sleep((tomorrow-today).seconds)
 
 @client.event
 async def on_message(message):
+    global stats
+    # update stats
+    stats["messages"] += 1;
+    if message.author in stats["members"]:
+        stats["members"][message.author] += 1
+    else:
+        stats["members"][message.author] = 1
+
+    if message.channel in stats["channels"]:
+        stats["channels"][message.channel] += 1
+    else:
+        stats["channels"][message.channel] = 1
+
+    # handle message
     parsed = message.content.split()
     user_roles = message.author.roles
 
@@ -71,6 +112,7 @@ async def on_message(message):
 
 @client.event
 async def on_member_join(member):
+    stats["newmembers"] += 1
     s = "Welcome to UMCP Gaming, " + member.mention + "!\nLooks like you haven't added any games yet! It must seem pretty empty here.\n"
     s = s + "Head over to <#349781614877999104> and add your first game. "
     s = s + "After you do that, <#358005392648962059> will disappear and you will be able to engage with the communities that you choose to be in!\n"
@@ -125,6 +167,8 @@ async def on_ready():
     print(client.user.id)
     print('------')
 
+#start stats loop
+client.loop.create_task(update_stats())
 
 client.run('MzQ5NTk5MzA3MjAyMDM1NzE0.DH36AA.OpWuFqLsT35zjaeawqiv5bUJFzY') ### UMCP Gaming Bot
 # client.run('MzUyNTAzNDI5ODkwOTY1NTE0.DKBn5Q.uzxPgF-95GSZyXvzYKrAIDoi0c8') ### ChilledToad
