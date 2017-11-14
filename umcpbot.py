@@ -15,28 +15,7 @@ stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
 
 # Stats
 
-async def update_stats():
-    global stats
-    await client.wait_until_ready()
-    server = discord.utils.find(lambda s: s.name == servername, client.servers)
-    channel = discord.utils.find(lambda c: c.name == "stats", server.channels)
-    while not client.is_closed:
-        if len(stats["channels"]) > 0 and len(stats["members"]) > 0:
-            topchannel = max(stats["channels"].keys(), key=(lambda k: stats["channels"][k]))
-            topmember = max(stats["members"].keys(), key=(lambda k: stats["members"][k]))
-            embed_message = "__**Most Active Member:**__\t\t" + topmember.mention + " with " + str(stats["members"][topmember])
-            embed_message+= " messages sent!\n__**Most Active Channel:**__\t\t" + topchannel.mention + " with "
-            embed_message+= str(stats["channels"][topchannel]) + " messages sent!\nThere were a total of " + str(stats["messages"])
-            embed_message+= " messages sent today!\n\n" + str(stats["newmembers"]) + " new members joined today! Welcome!\n__**Total Members:**__\t" + str(len(server.members))
 
-            em = discord.Embed(title='Today\'s Stats', description=embed_message, colour=0xFF0000)
-            em.set_author(name='UMCP Gaming', icon_url=client.user.avatar_url)
-            await client.send_message(channel, embed=em)
-        # reset stats
-        stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
-        today = datetime.datetime.today()
-        tomorrow = today + datetime.timedelta(days=1)
-        await asyncio.sleep((tomorrow-today).seconds)
 
 @client.event
 async def on_message(message):
