@@ -37,8 +37,6 @@ async def update_stats():
         stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
         today = datetime.datetime.today()
         tomorrow = today + datetime.timedelta(days=1)
-        if first_run:
-            tomorrow = datetime.
         print((tomorrow-today).total_seconds())
         await asyncio.sleep((tomorrow-today).total_seconds())
 
