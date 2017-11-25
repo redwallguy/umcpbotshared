@@ -14,7 +14,18 @@ aliases = {}
 stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
 first_run = False
 
+
 # Stats
+
+def next_time():
+    today = datetime.datetime.today()
+    tomorrow = today.replace(hour=8, minute=0, second=0, microsecond=0)
+    if (tomorrow < today):
+        tomorrow = tomorrow + datetime.timedelta(days=1)
+
+    print(tomorrow)
+    return (tomorrow - today)
+
 
 async def update_stats():
     global stats
@@ -25,8 +36,8 @@ async def update_stats():
         if len(stats["channels"]) > 0 and len(stats["members"]) > 0:
             topchannel = max(stats["channels"].keys(), key=(lambda k: stats["channels"][k]))
             topmember = max(stats["members"].keys(), key=(lambda k: stats["members"][k]))
-            embed_message = "__**Most Active Member:**__\t\t" + topmember.mention + " with " + str(stats["members"][topmember])
-            embed_message+= " messages sent!\n__**Most Active Channel:**__\t\t" + topchannel.mention + " with "
+            embed_message = "__**Most Active Member:**__\t\t" + topmember.display_name + " with " + str(stats["members"][topmember])
+            embed_message+= " messages sent!\n__**Most Active Channel:**__\t\t" + topchannel.name + " with "
             embed_message+= str(stats["channels"][topchannel]) + " messages sent!\nThere were a total of " + str(stats["messages"])
             embed_message+= " messages sent today!\n\n" + str(stats["newmembers"]) + " new members joined today! Welcome!\n__**Total Members:**__\t" + str(len(server.members))
 
@@ -36,9 +47,8 @@ async def update_stats():
         # reset stats
         stats = {"channels":{},"members":{},"newmembers":0,"messages":0}
         today = datetime.datetime.today()
-        tomorrow = today + datetime.timedelta(days=1)
-        print((tomorrow-today).total_seconds())
-        await asyncio.sleep((tomorrow-today).total_seconds())
+        next = next_time()
+        await asyncio.sleep(next.total_seconds())
 
 @client.event
 async def on_message(message):
