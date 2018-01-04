@@ -53,8 +53,12 @@ async def update_stats():
 @client.event
 async def on_message(message):
     global stats
+
+    if message.author.bot:
+        return
+
     # update stats
-    stats["messages"] += 1;
+    stats["messages"] += 1
     if message.author in stats["members"]:
         stats["members"][message.author] += 1
     else:
@@ -112,8 +116,8 @@ async def on_message(message):
                     await client.remove_roles(message.author, role)
 
 
-    elif(message.content.startswith('!help')):
-        s = """ ```Markdown\n!help - Displays this message\n"""
+    elif(message.content.startswith('!help') or message.content.startswith('!list')):
+        s = """ ```Markdown\n!help/!list - Displays this message\n"""
         s = s + """!addgame [game] <game> <game> ... - Add the game role(s) to allow access to the chat channels\n"""
         s = s + """!removegame [game] <game> <game> ... - Remove the game role(s)\n\nWe support """
         for role in roles[:-1]:
