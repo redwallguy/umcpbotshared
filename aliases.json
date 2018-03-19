@@ -9,7 +9,7 @@
   "csgo": ["cs", "counterstrike"],
   "pubg": ["battlegrounds"],
   "hearthstone": ["hs"],
-  "runescape": ["osrs", "07scape"],
+  "mmo": ["osrs", "07scape", "wow", "no", "bdo", "maplestory", "eve", "eso", "tera"],
   "rhythm": ["osu", "guitar", "rythm", "stepmania", "mania", "o2jam", "lunatic"],
   "sandbox": ["minecraft", "terraria", "starbound"]
 }
