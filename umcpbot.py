@@ -51,8 +51,71 @@ class Games:
         except:
             return
 
+    def remove_game(self, game):
+        try:
+            cur.execute("DELETE FROM games WHERE game = %s", game)
+            self.games.pop(game, None)
+        except:
+            return
 
+gameObj = Games()
 
+@bot.event
+async def on_member_join(member):
+    r.incr("newmem"+member.guild.id)
+    readmechan = discord.utils.get(member.guild.text_channels, name="important-readme")
+    rolereqchan = discord.utils.get(member.guild.text_channels, name="role-request")
+    msg = "Welcome to UMCP Gaming, " + member.mention + "! "
+    msg += "To get started, head over to " + rolereqchan.mention + " and add a game"
+    msg += " using the !addgame command. Once you do so, you can view and interact with that game's"
+    msg += " voice and text channels, and " + readmechan.mention + " will disappear."
+    await member.send(msg)
 
+@bot.command()
+async def addgame(ctx, *games):
+    if len(games) == 0:
+        await ctx.send("No game provided.")
+        return
+    elif len(games) > 10:
+        numgames = 10
+    else:
+        numgames = len(games)
+    for i in range(numgames):
+        for game in gameObj.get_games():
+            if games[i].lower() == game.lower() or games[i].lower() in gameObj.get_games()[game]:
+                role_to_add = discord.utils.get(ctx.guild.roles, name=game)
+                if role_to_add is not None:
+                    ctx.author.add_roles(role_to_add)
 
+@bot.command()
+async def removegame(ctx, *games):
+    if len(games) == 0:
+        await ctx.send("No game provided.")
+        return
+    elif len(games) > 10:
+        numgames = 10
+    else:
+        numgames = len(games)
+    for i in range(numgames):
+        for game in gameObj.get_games():
+            if games[i].lower() == game.lower() or games[i].lower() in gameObj.get_games()[game]:
+                role_to_rem = discord.utils.get(ctx.guild.roles, name=game)
+                if role_to_rem is not None:
+                    ctx.author.remove_roles(role_to_rem)
 
+@bot.command()
+async def addall(ctx):
+    for game in gameObj.get_games():
+        role_to_add = discord.utils.get(ctx.guild.roles, name=game)
+        if role_to_add is not None:
+            ctx.author.add_roles(role_to_add)
+
+@bot.command()
+async def removeall(ctx):
+    for game in gameObj.get_games():
+        role_to_rem = discord.utils.get(ctx.guild.roles, name=game)
+        if role_to_rem is not None:
+            ctx.author.add_roles(role_to_rem)
+
+#TODO admin add/remove games from db (@bot.check(isAdmin))
+#TODO celery support for remindme feature

@@ -1,3 +1,5 @@
 .DS_Store
 .env
 umcppy
+umcpbot_old.txt
+*.rdb
