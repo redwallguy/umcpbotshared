@@ -1,1 +1,1 @@
-worker: python umcpbot.py
+disc_w_cel: python3 umcpbot.py && celery -A umcpbot worker
