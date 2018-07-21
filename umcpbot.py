@@ -4,6 +4,8 @@ import os
 from discord.ext import commands
 import redis
 import psycopg2
+import celery
+import datetime
 
 bot = commands.Bot(command_prefix="!")
 token = os.environ.get("discToken")
@@ -13,6 +15,19 @@ dburl = os.environ.get("DATABASE_URL")
 conn = psycopg2.connect(dburl, sslmode="require")
 cur = conn.cursor()
 
+app = celery.Celery('umcp_celery', broker=os.environ.get("REDIS_URL"))
+
+@app.task
+def remind(chan, message):
+    cbot = commands.Bot()
+    ctoken = os.environ.get("discToken")
+
+    @bot.event
+    async def on_ready():
+        await chan.send(message)
+        await cbot.close()
+
+    cbot.run(ctoken)
 
 class Games:
     def __init__(self):
@@ -73,6 +88,12 @@ async def on_member_join(member):
 
 @bot.command()
 async def addgame(ctx, *games):
+    """
+    Adds game(s) to your roles.
+
+    Usage: !addgame game1 game2 ...
+    Maximum 10 games added at once
+    """
     if len(games) == 0:
         await ctx.send("No game provided.")
         return
@@ -85,10 +106,16 @@ async def addgame(ctx, *games):
             if games[i].lower() == game.lower() or games[i].lower() in gameObj.get_games()[game]:
                 role_to_add = discord.utils.get(ctx.guild.roles, name=game)
                 if role_to_add is not None:
-                    ctx.author.add_roles(role_to_add)
+                    await ctx.author.add_roles(role_to_add)
 
 @bot.command()
 async def removegame(ctx, *games):
+    """
+    Removes game(s) from your roles.
+
+    Usage: !removegame game1 game2 ...
+    Maximum 10 games removed at once
+    """
     if len(games) == 0:
         await ctx.send("No game provided.")
         return
@@ -101,21 +128,112 @@ async def removegame(ctx, *games):
             if games[i].lower() == game.lower() or games[i].lower() in gameObj.get_games()[game]:
                 role_to_rem = discord.utils.get(ctx.guild.roles, name=game)
                 if role_to_rem is not None:
-                    ctx.author.remove_roles(role_to_rem)
+                    await ctx.author.remove_roles(role_to_rem)
 
 @bot.command()
 async def addall(ctx):
+    """
+    Adds all games to your roles.
+    UNLIMITED POWAHHHH
+    """
     for game in gameObj.get_games():
         role_to_add = discord.utils.get(ctx.guild.roles, name=game)
         if role_to_add is not None:
-            ctx.author.add_roles(role_to_add)
+            await ctx.author.add_roles(role_to_add)
 
 @bot.command()
 async def removeall(ctx):
+    """
+    Removes all games from your roles.
+    Et ego dabo vobis tabula rasa...
+    """
     for game in gameObj.get_games():
         role_to_rem = discord.utils.get(ctx.guild.roles, name=game)
         if role_to_rem is not None:
-            ctx.author.add_roles(role_to_rem)
+            await ctx.author.add_roles(role_to_rem)
+
+@bot.command()
+async def remindafter(ctx, hours: int, minutes: int, msg=None):
+    """
+    Sends reminder back to the channel after [hours] hours and [minutes] minutes, with the given message.
+
+    If no message is provided, then the message '[author] has been reminded!' will be sent by default.
+    The furthest in the future you can set a reminder is 2 weeks.
+    Each user may only have one reminder pending, with maximum 30 total reminders over the entire server.
+    """
+    default_msg = ctx.author.name + " has been reminded!"
+    delay_in_sec = (hours*3600) + (minutes*60)
+    if hours < 0 or minutes < 0:
+        ctx.send("I can't go back in time, sorry.")
+        return
+    if delay_in_sec > 1209600:
+        ctx.send("You can only set a reminder up to 2 weeks in advance.")
+        return
+    if msg is None:
+        remind.apply_async(args=[ctx.channel, default_msg], countdown=delay_in_sec)
+        return
+    else:
+        remind.apply_async(args=[ctx.channel, msg], countdown=delay_in_sec)
+        return
+
+def to_date(dt):
+    dt_split = dt.split("/")
+    if len(dt_split) != 4:
+        raise commands.BadArgument()
+    else:
+        try:
+            month = int(dt_split[0])
+            day = int(dt_split[1])
+            year = int(dt_split[2])
+        except ValueError:
+            raise commands.BadArgument()
+        else:
+            time_given = dt_split[3]
+            time_split = time_given.split(":")
+            if len(time_split) != 2:
+                raise commands.BadArgument()
+            else:
+                try:
+                    hour = int(time_split[0])
+                    minute = int(time_split[1])
+                except ValueError:
+                    raise commands.BadArgument()
+                else:
+                    try:
+                        date = datetime.datetime(year=year,month=month,day=day,hour=hour,minute=minute,
+                                                 tzinfo=datetime.timezone.utc)
+                    except ValueError:
+                        raise commands.BadArgument()
+                    else:
+                        if datetime.datetime.now(datetime.timezone.utc) - date > datetime.timedelta(seconds=0) or date - datetime.datetime.now(tzinfo=datetime.timezone.utc) > datetime.timedelta(weeks=2):
+                            raise commands.BadArgument()
+                        else:
+                            return date
+
+
+@remindat.error
+async def remindat_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        ctx.send("Your reminder time is bad. Type !help remindat to see the rules for setting a reminder.")
+
+
+
+async def remindat(ctx, date: to_date, msg=None):
+    """
+    Sends reminder back to channel at time specified by [date] with the given message.
+    Date should be formatted as mm/dd/yyyy/hh:mm.
+
+    If no message is provided, then the message '[author] has been reminded!' will be sent by default.
+    The furthest in the future you can set a reminder is 2 weeks.
+    Each user may only have one reminder pending, with maximum 30 total reminders over the entire server.
+    """
+    default_msg = ctx.author.name + " has been reminded!"
+    if msg is None:
+        remind.apply_async(args=[ctx.channel, default_msg], eta=date)
+        return
+    else:
+        remind.apply_async(args=[ctx.channel, msg], eta=date)
+        return
 
 #TODO admin add/remove games from db (@bot.check(isAdmin))
 #TODO celery support for remindme feature
