@@ -1,11 +1,11 @@
 import discord
-import asyncio
 import os
 from discord.ext import commands
 import redis
 import psycopg2
 import celery
 import datetime
+import requests
 
 bot = commands.Bot(command_prefix="!")
 token = os.environ.get("discToken")
@@ -18,16 +18,12 @@ cur = conn.cursor()
 app = celery.Celery('umcp_celery', broker=os.environ.get("REDIS_URL"))
 
 @app.task
-def remind(chan, message):
-    cbot = commands.Bot()
-    ctoken = os.environ.get("discToken")
+def remind(aid, message):
+    r.lrem("reminderlist",aid)
+    requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'},
+                      data={'content': message})
 
-    @bot.event
-    async def on_ready():
-        await chan.send(message)
-        await cbot.close()
 
-    cbot.run(ctoken)
 
 class Games:
     def __init__(self):
@@ -37,7 +33,7 @@ class Games:
         for g in glist:
             self.games[g[0]] = []
         for key in self.games:
-            cur.execute("SELECT (alias) FROM aliases WHERE game = %s", key)
+            cur.execute("SELECT (alias) FROM aliases WHERE game = %s", (key,))
             alilist = cur.fetchall()
             for ali in alilist:
                 self.games[key].append(ali[0])
@@ -47,33 +43,41 @@ class Games:
 
     def add_game(self, game):
         try:
-            cur.execute("INSERT INTO (games) VALUES (%s)", game)
+            cur.execute("INSERT INTO (games) VALUES (%s)", (game,))
             self.games[game] = []
         except:
             return "Game already exists."
 
     def add_alias(self, alias, game):
         try:
-            cur.execute("INSERT INTO aliases (alias, game) VALUES (%s,%s)", alias, game)
+            cur.execute("INSERT INTO aliases (alias, game) VALUES (%s,%s)", (alias, game))
             self.games[game].append(alias)
         except:
             return "Oops! Something went wrong."
 
     def remove_alias(self, alias, game):
         try:
-            cur.execute("DELETE FROM aliases WHERE alias = %s", alias)
+            cur.execute("DELETE FROM aliases WHERE alias = %s", (alias,))
             self.games[game].remove(alias)
         except:
             return
 
     def remove_game(self, game):
         try:
-            cur.execute("DELETE FROM games WHERE game = %s", game)
+            cur.execute("DELETE FROM games WHERE game = %s", (game,))
             self.games.pop(game, None)
         except:
             return
 
 gameObj = Games()
+
+async def no_reminder(ctx):
+    numrem = r.lrem("reminderlist", ctx.author.id)
+    if numrem != 0:
+        r.lpush("reminderlist", ctx.author.id)
+        return False
+    else:
+        return True
 
 @bot.event
 async def on_member_join(member):
@@ -153,6 +157,7 @@ async def removeall(ctx):
             await ctx.author.add_roles(role_to_rem)
 
 @bot.command()
+@commands.check(no_reminder)
 async def remindafter(ctx, hours: int, minutes: int, msg=None):
     """
     Sends reminder back to the channel after [hours] hours and [minutes] minutes, with the given message.
@@ -164,16 +169,18 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
     default_msg = ctx.author.name + " has been reminded!"
     delay_in_sec = (hours*3600) + (minutes*60)
     if hours < 0 or minutes < 0:
-        ctx.send("I can't go back in time, sorry.")
+        await ctx.send("I can't go back in time, sorry.")
         return
     if delay_in_sec > 1209600:
-        ctx.send("You can only set a reminder up to 2 weeks in advance.")
+        await ctx.send("You can only set a reminder up to 2 weeks in advance.")
         return
     if msg is None:
-        remind.apply_async(args=[ctx.channel, default_msg], countdown=delay_in_sec)
+        remind.apply_async(args=[ctx.author.id, default_msg], countdown=delay_in_sec)
+        r.lpush("reminderlist", ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.channel, msg], countdown=delay_in_sec)
+        remind.apply_async(args=[ctx.author.id, msg], countdown=delay_in_sec)
+        r.lpush("reminderlist", ctx.author.id)
         return
 
 def to_date(dt):
@@ -211,13 +218,8 @@ def to_date(dt):
                             return date
 
 
-@remindat.error
-async def remindat_error(ctx, error):
-    if isinstance(error, commands.BadArgument):
-        ctx.send("Your reminder time is bad. Type !help remindat to see the rules for setting a reminder.")
-
-
-
+@bot.command()
+@commands.check(no_reminder)
 async def remindat(ctx, date: to_date, msg=None):
     """
     Sends reminder back to channel at time specified by [date] with the given message.
@@ -229,11 +231,19 @@ async def remindat(ctx, date: to_date, msg=None):
     """
     default_msg = ctx.author.name + " has been reminded!"
     if msg is None:
-        remind.apply_async(args=[ctx.channel, default_msg], eta=date)
+        remind.apply_async(args=[ctx.author.id, default_msg], eta=date)
+        r.lpush("reminderlist",ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.channel, msg], eta=date)
+        remind.apply_async(args=[ctx.author.id,  msg], eta=date)
+        r.lpush("reminderlist", ctx.author.id)
         return
 
+@remindat.error
+async def remindat_error(ctx, error):
+    if isinstance(error, commands.BadArgument):
+        await ctx.send("Your reminder time is bad. Type !help remindat to see the rules for setting a reminder.")
+
+bot.run(token)
 #TODO admin add/remove games from db (@bot.check(isAdmin))
 #TODO celery support for remindme feature
