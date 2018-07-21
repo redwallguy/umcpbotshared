@@ -3,9 +3,8 @@ import os
 from discord.ext import commands
 import redis
 import psycopg2
-import celery
 import datetime
-import requests
+from .tasks import *
 
 bot = commands.Bot(command_prefix="!")
 token = os.environ.get("discToken")
@@ -15,14 +14,19 @@ dburl = os.environ.get("DATABASE_URL")
 conn = psycopg2.connect(dburl, sslmode="require")
 cur = conn.cursor()
 
+import celery
+import requests
+
 app = celery.Celery('umcp_celery', broker=os.environ.get("REDIS_URL"))
 
 @app.task
 def remind(aid, message):
+    print("Success")
     r.lrem("reminderlist",aid)
-    q = requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'},
+    requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'},
                       data={'content': message})
     return
+
 
 async def no_reminder(ctx):
     numrem = r.lrem("reminderlist", ctx.author.id)
@@ -62,11 +66,11 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
         await ctx.send("You can only set a reminder up to 2 weeks in advance.")
         return
     if msg is None:
-        remind.apply_async(args=[ctx.author.id, default_msg], countdown=delay_in_sec)
+        remind.apply_async(args=(ctx.author.id, default_msg), countdown=delay_in_sec)
         r.lpush("reminderlist", ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.author.id, msg], countdown=delay_in_sec)
+        remind.apply_async(args=(ctx.author.id, msg), countdown=delay_in_sec)
         r.lpush("reminderlist", ctx.author.id)
         return
 
@@ -118,11 +122,11 @@ async def remindat(ctx, date: to_date, msg=None):
     """
     default_msg = ctx.author.name + " has been reminded!"
     if msg is None:
-        remind.apply_async(args=[ctx.author.id, default_msg], eta=date)
+        remind.apply_async(args=(ctx.author.id, default_msg), eta=date)
         r.lpush("reminderlist",ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.author.id,  msg], eta=date)
+        remind.apply_async(args=(ctx.author.id,  msg), eta=date)
         r.lpush("reminderlist", ctx.author.id)
         return
 
