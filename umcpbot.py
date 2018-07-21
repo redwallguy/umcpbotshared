@@ -22,6 +22,7 @@ def remind(aid, message):
     r.lrem("reminderlist",aid)
     requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'},
                       data={'content': message})
+    return
 
 async def no_reminder(ctx):
     numrem = r.lrem("reminderlist", ctx.author.id)
