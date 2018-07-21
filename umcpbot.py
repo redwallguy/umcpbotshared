@@ -128,6 +128,10 @@ async def remindat(ctx, date: to_date, msg=None):
         r.lpush("reminderlist", ctx.author.id)
         return
 
+@bot.command()
+async def ping(ctx):
+    remind.delay(ctx.author.id, "fuck you")
+
 @remindat.error
 async def remindat_error(ctx, error):
     if isinstance(error, commands.BadArgument):
