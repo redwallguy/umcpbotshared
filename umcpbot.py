@@ -3,8 +3,8 @@ import os
 from discord.ext import commands
 import redis
 import psycopg2
-import celery
 import datetime
+import celery
 import requests
 import json
 
@@ -24,7 +24,6 @@ def remind(aid, message):
     requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'}, json={'content': message})
 
 class Remind:
-
     def __init__(self):
         with open("reminder.json", "w") as f:
             json.dump({},f)
@@ -97,22 +96,6 @@ class Games:
 gameObj = Games()
 remindObj = Remind()
 
-async def no_reminder(ctx):
-    if remindObj.is_pending(ctx.author.id):
-        return False
-    else:
-        return True
-
-@bot.event
-async def on_member_join(member):
-    r.incr("newmem"+member.guild.id)
-    readmechan = discord.utils.get(member.guild.text_channels, name="important-readme")
-    rolereqchan = discord.utils.get(member.guild.text_channels, name="role-request")
-    msg = "Welcome to UMCP Gaming, " + member.mention + "! "
-    msg += "To get started, head over to " + rolereqchan.mention + " and add a game"
-    msg += " using the !addgame command. Once you do so, you can view and interact with that game's"
-    msg += " voice and text channels, and " + readmechan.mention + " will disappear."
-    await member.send(msg)
 
 @bot.command()
 async def addgame(ctx, *games):
@@ -136,6 +119,7 @@ async def addgame(ctx, *games):
                 if role_to_add is not None:
                     await ctx.author.add_roles(role_to_add)
 
+
 @bot.command()
 async def removegame(ctx, *games):
     """
@@ -158,6 +142,7 @@ async def removegame(ctx, *games):
                 if role_to_rem is not None:
                     await ctx.author.remove_roles(role_to_rem)
 
+
 @bot.command()
 async def addall(ctx):
     """
@@ -169,6 +154,7 @@ async def addall(ctx):
         if role_to_add is not None:
             await ctx.author.add_roles(role_to_add)
 
+
 @bot.command()
 async def removeall(ctx):
     """
@@ -179,6 +165,23 @@ async def removeall(ctx):
         role_to_rem = discord.utils.get(ctx.guild.roles, name=game)
         if role_to_rem is not None:
             await ctx.author.add_roles(role_to_rem)
+
+async def no_reminder(ctx):
+    if remindObj.is_pending(ctx.author.id):
+        return False
+    else:
+        return True
+
+@bot.event
+async def on_member_join(member):
+    r.incr("newmem"+member.guild.id)
+    readmechan = discord.utils.get(member.guild.text_channels, name="important-readme")
+    rolereqchan = discord.utils.get(member.guild.text_channels, name="role-request")
+    msg = "Welcome to UMCP Gaming, " + member.mention + "! "
+    msg += "To get started, head over to " + rolereqchan.mention + " and add a game"
+    msg += " using the !addgame command. Once you do so, you can view and interact with that game's"
+    msg += " voice and text channels, and " + readmechan.mention + " will disappear."
+    await member.send(msg)
 
 @bot.command()
 @commands.check(no_reminder)
@@ -203,7 +206,7 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
         remindObj.add_user(ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.author.id, "<@" + ctx.author.name + ">" + msg], countdown=delay_in_sec)
+        remind.apply_async(args=[ctx.author.id, "<@" + str(ctx.author.id) + ">" + msg], countdown=delay_in_sec)
         remindObj.add_user(ctx.author.id)
         return
 
@@ -267,7 +270,6 @@ async def remindat(ctx, date: to_date, msg=None):
     else:
         remind.apply_async(args=[ctx.author.id, "<@"+str(ctx.author.id)+">"+ msg], eta=date)
         remindObj.add_user(ctx.author.id)
-        return
 
 @remindat.error
 async def remindat_error(ctx, error):
