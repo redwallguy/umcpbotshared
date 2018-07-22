@@ -6,24 +6,43 @@ import psycopg2
 import celery
 import datetime
 import requests
+import json
 
 bot = commands.Bot(command_prefix="!")
-token = os.environ.get("discToken")
+token = os.environ.get("DISC_TOKEN")
 r = redis.from_url(os.environ.get("REDIS_URL"))
 
 dburl = os.environ.get("DATABASE_URL")
 conn = psycopg2.connect(dburl, sslmode="require")
 cur = conn.cursor()
 
-app = celery.Celery('umcp_celery', broker=os.environ.get("REDIS_URL"))
+app = celery.Celery('umcpbot', broker=os.environ.get("REDIS_URL"))
 
 @app.task
 def remind(aid, message):
-    r.lrem("reminderlist",aid)
-    requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'},
-                      data={'content': message})
+    remindObj.rem_user(aid)
+    requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'}, json={'content': message})
 
+class Remind:
 
+    def is_pending(self, aid):
+        with open "reminder.json" as f:
+            if aid in json.load(f):
+                return True
+            else:
+                return False
+
+    def add_user(self, aid):
+        with open "reminder.json" as f:
+            rd = json.load(f)
+            rd[aid] = "0"
+            json.dump(f)
+
+    def rem_user(self, aid):
+        with open "reminder.json" as f:
+            rd = json.load(f)
+            rd.pop(aid,"1")
+            json.dump(f)
 
 class Games:
     def __init__(self):
@@ -70,11 +89,10 @@ class Games:
             return
 
 gameObj = Games()
+remindObj = Remind()
 
 async def no_reminder(ctx):
-    numrem = r.lrem("reminderlist", ctx.author.id)
-    if numrem != 0:
-        r.lpush("reminderlist", ctx.author.id)
+    if remindObj.is_pending(ctx.author.id):
         return False
     else:
         return True
@@ -176,11 +194,11 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
         return
     if msg is None:
         remind.apply_async(args=[ctx.author.id, default_msg], countdown=delay_in_sec)
-        r.lpush("reminderlist", ctx.author.id)
+        remindObj.add_user(ctx.author.id)
         return
     else:
         remind.apply_async(args=[ctx.author.id, msg], countdown=delay_in_sec)
-        r.lpush("reminderlist", ctx.author.id)
+        remindObj.add_user(ctx.author.id)
         return
 
 def to_date(dt):
@@ -232,11 +250,11 @@ async def remindat(ctx, date: to_date, msg=None):
     default_msg = ctx.author.name + " has been reminded!"
     if msg is None:
         remind.apply_async(args=[ctx.author.id, default_msg], eta=date)
-        r.lpush("reminderlist",ctx.author.id)
+        remindObj.add_user(ctx.author.id)
         return
     else:
         remind.apply_async(args=[ctx.author.id,  msg], eta=date)
-        r.lpush("reminderlist", ctx.author.id)
+        remindObj.add_user(ctx.author.id)
         return
 
 @remindat.error
@@ -244,6 +262,7 @@ async def remindat_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         await ctx.send("Your reminder time is bad. Type !help remindat to see the rules for setting a reminder.")
 
-bot.run(token)
+if __name__ == '__main__':
+    bot.run(token)
 #TODO admin add/remove games from db (@bot.check(isAdmin))
 #TODO celery support for remindme feature

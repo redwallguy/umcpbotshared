@@ -5,3 +5,4 @@ umcpbot_old.txt
 *.rdb
 .idea
 *.dev
+*.pyc
