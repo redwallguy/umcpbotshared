@@ -6,7 +6,6 @@ import psycopg2
 import datetime
 import celery
 import requests
-from .tasks import remind
 
 bot = commands.Bot(command_prefix="!")
 token = os.environ.get("discToken")
@@ -15,6 +14,17 @@ r = redis.from_url(os.environ.get("REDIS_URL"))
 dburl = os.environ.get("DATABASE_URL")
 conn = psycopg2.connect(dburl, sslmode="require")
 cur = conn.cursor()
+
+app = celery.Celery('umcp_celery', broker=os.environ.get("REDIS_URL"))
+
+@app.task
+def remind(aid, message):
+    print("Success")
+    r.lrem("reminderlist",aid)
+    requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'},
+                      data={'content': message})
+    return
+
 
 async def no_reminder(ctx):
     numrem = r.lrem("reminderlist", ctx.author.id)
