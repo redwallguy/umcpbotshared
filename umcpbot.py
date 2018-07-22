@@ -25,24 +25,30 @@ def remind(aid, message):
 
 class Remind:
 
+    def __init__(self):
+        with open("reminder.json", "w") as f:
+            json.dump({},f)
+
     def is_pending(self, aid):
-        with open "reminder.json" as f:
-            if aid in json.load(f):
+        with open("reminder.json") as f:
+            if str(aid) in json.load(f):
                 return True
             else:
                 return False
 
     def add_user(self, aid):
-        with open "reminder.json" as f:
+        with open("reminder.json", "r") as f:
             rd = json.load(f)
             rd[aid] = "0"
-            json.dump(f)
+        with open("reminder.json", "w") as f:
+            json.dump(rd, f)
 
     def rem_user(self, aid):
-        with open "reminder.json" as f:
+        with open("reminder.json", "r") as f:
             rd = json.load(f)
-            rd.pop(aid,"1")
-            json.dump(f)
+            rd.pop(str(aid), "1")
+        with open("reminder.json", "w") as f:
+            json.dump(rd, f)
 
 class Games:
     def __init__(self):
@@ -184,7 +190,7 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
     The furthest in the future you can set a reminder is 2 weeks.
     Each user may only have one reminder pending, with maximum 30 total reminders over the entire server.
     """
-    default_msg = ctx.author.name + " has been reminded!"
+    default_msg = "<@" + str(ctx.author.id) + ">" + " has been reminded!"
     delay_in_sec = (hours*3600) + (minutes*60)
     if hours < 0 or minutes < 0:
         await ctx.send("I can't go back in time, sorry.")
@@ -197,13 +203,14 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
         remindObj.add_user(ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.author.id, msg], countdown=delay_in_sec)
+        remind.apply_async(args=[ctx.author.id, "<@" + ctx.author.name + ">" + msg], countdown=delay_in_sec)
         remindObj.add_user(ctx.author.id)
         return
 
 def to_date(dt):
     dt_split = dt.split("/")
     if len(dt_split) != 4:
+        print("Err 1")
         raise commands.BadArgument()
     else:
         try:
@@ -211,26 +218,31 @@ def to_date(dt):
             day = int(dt_split[1])
             year = int(dt_split[2])
         except ValueError:
+            print("Err 2")
             raise commands.BadArgument()
         else:
             time_given = dt_split[3]
             time_split = time_given.split(":")
             if len(time_split) != 2:
+                print("Err 3")
                 raise commands.BadArgument()
             else:
                 try:
                     hour = int(time_split[0])
                     minute = int(time_split[1])
                 except ValueError:
+                    print("Err 4")
                     raise commands.BadArgument()
                 else:
                     try:
                         date = datetime.datetime(year=year,month=month,day=day,hour=hour,minute=minute,
                                                  tzinfo=datetime.timezone.utc)
                     except ValueError:
+                        print("Err 5")
                         raise commands.BadArgument()
                     else:
-                        if datetime.datetime.now(datetime.timezone.utc) - date > datetime.timedelta(seconds=0) or date - datetime.datetime.now(tzinfo=datetime.timezone.utc) > datetime.timedelta(weeks=2):
+                        if datetime.datetime.now(datetime.timezone.utc) - date > datetime.timedelta(seconds=0) or date - datetime.datetime.now(datetime.timezone.utc) > datetime.timedelta(weeks=2):
+                            print("Err 6")
                             raise commands.BadArgument()
                         else:
                             return date
@@ -241,19 +253,19 @@ def to_date(dt):
 async def remindat(ctx, date: to_date, msg=None):
     """
     Sends reminder back to channel at time specified by [date] with the given message.
-    Date should be formatted as mm/dd/yyyy/hh:mm.
+    Date should be formatted as mm/dd/yyyy/hh:mm (UTC time).
 
     If no message is provided, then the message '[author] has been reminded!' will be sent by default.
     The furthest in the future you can set a reminder is 2 weeks.
     Each user may only have one reminder pending, with maximum 30 total reminders over the entire server.
     """
-    default_msg = ctx.author.name + " has been reminded!"
+    default_msg = "<@" + str(ctx.author.id) + ">" + " has been reminded!"
     if msg is None:
         remind.apply_async(args=[ctx.author.id, default_msg], eta=date)
         remindObj.add_user(ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.author.id,  msg], eta=date)
+        remind.apply_async(args=[ctx.author.id, "<@"+str(ctx.author.id)+">"+ msg], eta=date)
         remindObj.add_user(ctx.author.id)
         return
 
