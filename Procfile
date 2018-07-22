@@ -1,1 +1,1 @@
-worker: python3 umcpbot.py && celery worker --app=umcpbot.app
+worker: python3 umcpbot.py & celery worker --app=umcpbot.app wait -n
