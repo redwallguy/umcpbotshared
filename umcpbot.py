@@ -7,6 +7,7 @@ import datetime
 import celery
 import requests
 import json
+import time
 
 bot = commands.Bot(command_prefix="!")
 token = os.environ.get("DISC_TOKEN")
@@ -69,15 +70,15 @@ class Games:
         try:
             cur.execute("INSERT INTO (games) VALUES (%s)", (game,))
             self.games[game] = []
-        except:
-            return "Game already exists."
+        except Exception as e:
+            return e
 
     def add_alias(self, alias, game):
         try:
             cur.execute("INSERT INTO aliases (alias, game) VALUES (%s,%s)", (alias, game))
             self.games[game].append(alias)
-        except:
-            return "Oops! Something went wrong."
+        except Exception as e:
+            return e
 
     def remove_alias(self, alias, game):
         try:
@@ -112,12 +113,15 @@ async def addgame(ctx, *games):
         numgames = 10
     else:
         numgames = len(games)
+    retmsg = "You have been added to\n-----------\n"
     for i in range(numgames):
         for game in gameObj.get_games():
             if games[i].lower() == game.lower() or games[i].lower() in gameObj.get_games()[game]:
                 role_to_add = discord.utils.get(ctx.guild.roles, name=game)
                 if role_to_add is not None:
                     await ctx.author.add_roles(role_to_add)
+                    retmsg += game + "\n"
+    await ctx.send(retmsg)
 
 
 @bot.command()
@@ -135,12 +139,15 @@ async def removegame(ctx, *games):
         numgames = 10
     else:
         numgames = len(games)
+    retmsg = "You have been removed from\n-----------\n"
     for i in range(numgames):
         for game in gameObj.get_games():
             if games[i].lower() == game.lower() or games[i].lower() in gameObj.get_games()[game]:
                 role_to_rem = discord.utils.get(ctx.guild.roles, name=game)
                 if role_to_rem is not None:
                     await ctx.author.remove_roles(role_to_rem)
+                    retmsg += game + "\n"
+    await ctx.send(retmsg)
 
 
 @bot.command()
@@ -153,6 +160,7 @@ async def addall(ctx):
         role_to_add = discord.utils.get(ctx.guild.roles, name=game)
         if role_to_add is not None:
             await ctx.author.add_roles(role_to_add)
+    await ctx.send("You have been added to all games. ")
 
 
 @bot.command()
@@ -164,7 +172,33 @@ async def removeall(ctx):
     for game in gameObj.get_games():
         role_to_rem = discord.utils.get(ctx.guild.roles, name=game)
         if role_to_rem is not None:
-            await ctx.author.add_roles(role_to_rem)
+            await ctx.author.remove_roles(role_to_rem)
+    await ctx.send("You have been removed from all games.")
+
+@bot.command()
+async def games(ctx):
+    """
+    Lists all games supported, as well as their aliases.
+    """
+    gamemsg = "Games supported:\n--------------\n"
+    for game, alis in gameObj.get_games().items():
+        gamemsg += game + " ["
+        for ali in alis:
+            gamemsg += ali + ", "
+        gamemsg += "]\n"
+    await ctx.send(gamemsg)
+
+@bot.command()
+async def mygames(ctx):
+    """
+    Lists all games you are added to.
+    """
+    gamemsg = "Your games\n-----------\n"
+    for game in gameObj.get_games():
+        if discord.utils.get(ctx.author.roles, name=game) is not None:
+            gamemsg += game + "\n"
+    await ctx.send(gamemsg)
+
 
 async def no_reminder(ctx):
     if remindObj.is_pending(ctx.author.id):
@@ -174,7 +208,6 @@ async def no_reminder(ctx):
 
 @bot.event
 async def on_member_join(member):
-    r.incr("newmem"+member.guild.id)
     readmechan = discord.utils.get(member.guild.text_channels, name="important-readme")
     rolereqchan = discord.utils.get(member.guild.text_channels, name="role-request")
     msg = "Welcome to UMCP Gaming, " + member.mention + "! "
@@ -276,7 +309,11 @@ async def remindat_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         await ctx.send("Your reminder time is bad. Type !help remindat to see the rules for setting a reminder.")
 
+
 if __name__ == '__main__':
-    bot.run(token)
-#TODO admin add/remove games from db (@bot.check(isAdmin))
-#TODO celery support for remindme feature
+    while True:
+        try:
+            bot.run(token)
+        except Exception as e:
+            print(e)
+            time.sleep(60)
