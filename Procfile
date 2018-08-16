@@ -1,1 +1,1 @@
-worker: python3 umcpbot.py & celery worker -l INFO --app=umcpbot.app &
+worker: python3 umcpbot.py && celery worker -l INFO --app=umcpbot.app
