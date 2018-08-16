@@ -17,7 +17,7 @@ async def on_ready():
             topchannum = len(await topchan.history(limit=1000,after=yesterday).flatten())
             for tc in serv.text_channels:
                 tcnum = len(await tc.history(limit=1000, after=yesterday).flatten())
-                if tcnum > topchannum:
+                if tcnum > topchannum and tc.name not in ["private", "Private", "stats"]:
                     topchan = tc
                     topchannum = tcnum
 

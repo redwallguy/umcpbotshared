@@ -216,8 +216,12 @@ async def on_member_join(member):
     msg += " voice and text channels, and " + readmechan.mention + " will disappear."
     await member.send(msg)
 
+async def isOfficer(ctx):
+    return discord.utils.get(ctx.author.roles, name="Officer") is not None
+
 @bot.command()
 @commands.check(no_reminder)
+@commands.check(isOfficer)
 async def remindafter(ctx, hours: int, minutes: int, msg=None):
     """
     Sends reminder back to the channel after [hours] hours and [minutes] minutes, with the given message.
@@ -286,6 +290,7 @@ def to_date(dt):
 
 @bot.command()
 @commands.check(no_reminder)
+@commands.check(isOfficer)
 async def remindat(ctx, date: to_date, msg=None):
     """
     Sends reminder back to channel at time specified by [date] with the given message.
@@ -301,7 +306,7 @@ async def remindat(ctx, date: to_date, msg=None):
         remindObj.add_user(ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.author.id, "<@"+str(ctx.author.id)+">"+ msg], eta=date)
+        remind.apply_async(args=[ctx.author.id, "<@"+str(ctx.author.id)+"> "+ msg], eta=date)
         remindObj.add_user(ctx.author.id)
 
 @remindat.error
