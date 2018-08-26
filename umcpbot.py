@@ -97,8 +97,14 @@ class Games:
 gameObj = Games()
 remindObj = Remind()
 
+async def rolechan(ctx):
+    if ctx.channel.name == "role-request":
+        return True
+    else:
+        return False
 
 @bot.command()
+@commands.check(rolechan)
 async def addgame(ctx, *games):
     """
     Adds game(s) to your roles.
@@ -121,10 +127,12 @@ async def addgame(ctx, *games):
                 if role_to_add is not None:
                     await ctx.author.add_roles(role_to_add)
                     retmsg += game + "\n"
-    await ctx.send(retmsg)
+    if retmsg != "You have been added to\n-----------\n":
+        await ctx.send(retmsg)
 
 
 @bot.command()
+@commands.check(rolechan)
 async def removegame(ctx, *games):
     """
     Removes game(s) from your roles.
@@ -147,10 +155,12 @@ async def removegame(ctx, *games):
                 if role_to_rem is not None:
                     await ctx.author.remove_roles(role_to_rem)
                     retmsg += game + "\n"
-    await ctx.send(retmsg)
+    if retmsg != "You have been removed from\n-----------\n":
+        await ctx.send(retmsg)
 
 
 @bot.command()
+@commands.check(rolechan)
 async def addall(ctx):
     """
     Adds all games to your roles.
@@ -164,6 +174,7 @@ async def addall(ctx):
 
 
 @bot.command()
+@commands.check(rolechan)
 async def removeall(ctx):
     """
     Removes all games from your roles.
@@ -176,6 +187,7 @@ async def removeall(ctx):
     await ctx.send("You have been removed from all games.")
 
 @bot.command()
+@commands.check(rolechan)
 async def games(ctx):
     """
     Lists all games supported, as well as their aliases.
@@ -189,6 +201,7 @@ async def games(ctx):
     await ctx.send(gamemsg)
 
 @bot.command()
+@commands.check(rolechan)
 async def mygames(ctx):
     """
     Lists all games you are added to.
@@ -199,6 +212,24 @@ async def mygames(ctx):
             gamemsg += game + "\n"
     await ctx.send(gamemsg)
 
+@bot.event
+async def on_member_update(before,after):
+    if before.activity is not None:
+        if before.activity.type == discord.ActivityType.streaming:
+            if after.activity is None and discord.utils.get(after.roles, name="Now Streaming") is not None:
+                await after.remove_roles(discord.utils.get(after.roles, name="Now Streaming"))
+                return
+            elif after.activity.type != discord.ActivityType.streaming and discord.utils.get(after.roles, name="Now Streaming") is not None:
+                await after.remove_roles(discord.utils.get(after.roles, name="Now Streaming"))
+                return
+    elif after.activity is not None:
+        if after.activity.type == discord.ActivityType.streaming:
+            if before.activity is None and discord.utils.get(after.roles, name="Now Streaming") is None:
+                await after.add_roles(discord.utils.get(after.roles, name="Now Streaming"))
+                return
+            elif before.activity.type != discord.ActivityType.streaming and discord.utils.get(after.roles, name="Now Streaming") is None:
+                await after.add_roles(discord.utils.get(after.roles, name="Now Streaming"))
+                return
 
 async def no_reminder(ctx):
     if remindObj.is_pending(ctx.author.id):
