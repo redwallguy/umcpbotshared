@@ -11,7 +11,7 @@ import time
 
 bot = commands.Bot(command_prefix="!")
 token = os.environ.get("DISC_TOKEN")
-r = redis.from_url(os.environ.get("REDIS_URL"))
+r = redis.from_url(os.environ.get("REDIS_URL"), decode_responses=True)
 
 dburl = os.environ.get("DATABASE_URL")
 conn = psycopg2.connect(dburl, sslmode="require")
@@ -247,12 +247,9 @@ async def on_member_join(member):
     msg += " voice and text channels, and " + readmechan.mention + " will disappear."
     await member.send(msg)
 
-async def isOfficer(ctx):
-    return discord.utils.get(ctx.author.roles, name="Officer") is not None
-
 @bot.command()
 @commands.check(no_reminder)
-@commands.check(isOfficer)
+@commands.has_role("Officer")
 async def remindafter(ctx, hours: int, minutes: int, msg=None):
     """
     Sends reminder back to the channel after [hours] hours and [minutes] minutes, with the given message.
@@ -321,7 +318,7 @@ def to_date(dt):
 
 @bot.command()
 @commands.check(no_reminder)
-@commands.check(isOfficer)
+@commands.has_role("Officer")
 async def remindat(ctx, date: to_date, msg=None):
     """
     Sends reminder back to channel at time specified by [date] with the given message.
