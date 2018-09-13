@@ -6,3 +6,5 @@ umcpbot_old.txt
 .idea
 *.dev
 *.pyc
+Procfile
+config.json
