@@ -2,11 +2,9 @@ import discord
 from discord.ext import commands
 import os
 import datetime
-import redis
 
 bot = commands.Bot("!")
 token = os.environ.get("DISC_TOKEN")
-r = redis.from_url(os.environ.get("REDIS_URL"))
 
 @bot.event
 async def on_ready():

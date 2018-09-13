@@ -1,7 +1,6 @@
 import discord
 import os
 from discord.ext import commands
-import redis
 import psycopg2
 import datetime
 import celery
@@ -11,7 +10,6 @@ import time
 
 bot = commands.Bot(command_prefix="!")
 token = os.environ.get("DISC_TOKEN")
-r = redis.from_url(os.environ.get("REDIS_URL"), decode_responses=True)
 
 dburl = os.environ.get("DATABASE_URL")
 conn = psycopg2.connect(dburl, sslmode="require")
