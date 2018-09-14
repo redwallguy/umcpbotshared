@@ -376,5 +376,3 @@ if __name__ == '__main__':
         except Exception as e:
             print(e)
             time.sleep(60)
-
-# TODO switch reminder object to standalone that pulls and pushes to redis, have @check check against object, not redis
