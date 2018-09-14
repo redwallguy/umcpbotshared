@@ -19,36 +19,47 @@ cur = conn.cursor()
 
 app = celery.Celery('umcpbot', broker=os.environ.get("REDIS_URL"))
 
+
 @app.task
 def remind(aid, message):
-    remindObj.rem_user(aid)
-    requests.post(os.environ.get("WEBHOOK_URL"),headers={'Content-Type': 'application/json'}, json={'content': message})
+    remindObj.dec_user(aid)
+    requests.post(os.environ.get("WEBHOOK_URL"), headers={'Content-Type': 'application/json'},
+                  json={'content': message})
+
 
 class Remind:
+
     def __init__(self):
-        with open("reminder.json", "w") as f:
-            json.dump({},f)
+        self.REMINDER_LIMIT = 5
+        if r.get("reminder") is None:
+            r.set("reminder", json.dumps({}))
+            self.remind_dict = {}
+        else:
+            self.remind_dict = json.loads(r.get("reminder"))
 
-    def is_pending(self, aid):
-        with open("reminder.json") as f:
-            if str(aid) in json.load(f):
-                return True
-            else:
-                return False
+    def num_pending(self, aid):
+        aid = str(aid)
+        if aid in self.remind_dict:
+            return self.remind_dict[aid]
+        else:
+            return 0
 
-    def add_user(self, aid):
-        with open("reminder.json", "r") as f:
-            rd = json.load(f)
-            rd[aid] = "0"
-        with open("reminder.json", "w") as f:
-            json.dump(rd, f)
+    def inc_user(self, aid):
+        aid = str(aid)
+        if self.num_pending(aid) == 0:
+            self.remind_dict[aid] = 1
+        else:
+            self.remind_dict[aid] += 1
+        r.set("reminder", json.dumps(self.remind_dict))
 
-    def rem_user(self, aid):
-        with open("reminder.json", "r") as f:
-            rd = json.load(f)
-            rd.pop(str(aid), "1")
-        with open("reminder.json", "w") as f:
-            json.dump(rd, f)
+    def dec_user(self, aid):
+        aid = str(aid)
+        if self.num_pending(aid) <= 0:
+            self.remind_dict[aid] = 0
+        else:
+            self.remind_dict[aid] -= 1
+        r.set("reminder", json.dumps(self.remind_dict))
+
 
 class Games:
     def __init__(self):
@@ -94,14 +105,17 @@ class Games:
         except:
             return
 
+
 gameObj = Games()
 remindObj = Remind()
+
 
 async def rolechan(ctx):
     if ctx.channel.name == "role-request":
         return True
     else:
         return False
+
 
 @bot.command()
 @commands.check(rolechan)
@@ -186,6 +200,7 @@ async def removeall(ctx):
             await ctx.author.remove_roles(role_to_rem)
     await ctx.send("You have been removed from all games.")
 
+
 @bot.command()
 @commands.check(rolechan)
 async def games(ctx):
@@ -193,12 +208,13 @@ async def games(ctx):
     Lists all games supported, as well as their aliases.
     """
     gamemsg = "Games supported:\n--------------\n"
-    for game, alis in gameObj.get_games().items():
+    for game in sorted(gameObj.get_games()):
         gamemsg += game + " ["
-        for ali in alis:
+        for ali in gameObj.get_games()[game]:
             gamemsg += ali + ", "
         gamemsg += "]\n"
     await ctx.send(gamemsg)
+
 
 @bot.command()
 @commands.check(rolechan)
@@ -212,14 +228,16 @@ async def mygames(ctx):
             gamemsg += game + "\n"
     await ctx.send(gamemsg)
 
+
 @bot.event
-async def on_member_update(before,after):
+async def on_member_update(before, after):
     if before.activity is not None:
         if before.activity.type == discord.ActivityType.streaming:
             if after.activity is None and discord.utils.get(after.roles, name="Now Streaming") is not None:
                 await after.remove_roles(discord.utils.get(after.roles, name="Now Streaming"))
                 return
-            elif after.activity.type != discord.ActivityType.streaming and discord.utils.get(after.roles, name="Now Streaming") is not None:
+            elif after.activity.type != discord.ActivityType.streaming and discord.utils.get(after.roles,
+                                                                                             name="Now Streaming") is not None:
                 await after.remove_roles(discord.utils.get(after.roles, name="Now Streaming"))
                 return
     elif after.activity is not None:
@@ -227,15 +245,18 @@ async def on_member_update(before,after):
             if before.activity is None and discord.utils.get(after.roles, name="Now Streaming") is None:
                 await after.add_roles(discord.utils.get(after.roles, name="Now Streaming"))
                 return
-            elif before.activity.type != discord.ActivityType.streaming and discord.utils.get(after.roles, name="Now Streaming") is None:
+            elif before.activity.type != discord.ActivityType.streaming and discord.utils.get(after.roles,
+                                                                                              name="Now Streaming") is None:
                 await after.add_roles(discord.utils.get(after.roles, name="Now Streaming"))
                 return
 
-async def no_reminder(ctx):
-    if remindObj.is_pending(ctx.author.id):
-        return False
-    else:
+
+def reminder_lim(ctx):
+    if remindObj.num_pending(ctx.author.id) <= remindObj.REMINDER_LIMIT:
         return True
+    else:
+        return False
+
 
 @bot.event
 async def on_member_join(member):
@@ -247,8 +268,9 @@ async def on_member_join(member):
     msg += " voice and text channels, and " + readmechan.mention + " will disappear."
     await member.send(msg)
 
+
 @bot.command()
-@commands.check(no_reminder)
+@commands.check(reminder_lim)
 @commands.has_role("Officer")
 async def remindafter(ctx, hours: int, minutes: int, msg=None):
     """
@@ -259,7 +281,7 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
     Each user may only have one reminder pending, with maximum 30 total reminders over the entire server.
     """
     default_msg = "<@" + str(ctx.author.id) + ">" + " has been reminded!"
-    delay_in_sec = (hours*3600) + (minutes*60)
+    delay_in_sec = (hours * 3600) + (minutes * 60)
     if hours < 0 or minutes < 0:
         await ctx.send("I can't go back in time, sorry.")
         return
@@ -268,12 +290,13 @@ async def remindafter(ctx, hours: int, minutes: int, msg=None):
         return
     if msg is None:
         remind.apply_async(args=[ctx.author.id, default_msg], countdown=delay_in_sec)
-        remindObj.add_user(ctx.author.id)
+        remindObj.inc_user(ctx.author.id)
         return
     else:
         remind.apply_async(args=[ctx.author.id, "<@" + str(ctx.author.id) + ">" + msg], countdown=delay_in_sec)
-        remindObj.add_user(ctx.author.id)
+        remindObj.inc_user(ctx.author.id)
         return
+
 
 def to_date(dt):
     dt_split = dt.split("/")
@@ -303,13 +326,15 @@ def to_date(dt):
                     raise commands.BadArgument()
                 else:
                     try:
-                        date = datetime.datetime(year=year,month=month,day=day,hour=hour,minute=minute,
+                        date = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=minute,
                                                  tzinfo=datetime.timezone.utc)
                     except ValueError:
                         print("Err 5")
                         raise commands.BadArgument()
                     else:
-                        if datetime.datetime.now(datetime.timezone.utc) - date > datetime.timedelta(seconds=0) or date - datetime.datetime.now(datetime.timezone.utc) > datetime.timedelta(weeks=2):
+                        if datetime.datetime.now(datetime.timezone.utc) - date > datetime.timedelta(
+                                seconds=0) or date - datetime.datetime.now(datetime.timezone.utc) > datetime.timedelta(
+                                weeks=2):
                             print("Err 6")
                             raise commands.BadArgument()
                         else:
@@ -317,7 +342,7 @@ def to_date(dt):
 
 
 @bot.command()
-@commands.check(no_reminder)
+@commands.check(reminder_lim)
 @commands.has_role("Officer")
 async def remindat(ctx, date: to_date, msg=None):
     """
@@ -331,11 +356,12 @@ async def remindat(ctx, date: to_date, msg=None):
     default_msg = "<@" + str(ctx.author.id) + ">" + " has been reminded!"
     if msg is None:
         remind.apply_async(args=[ctx.author.id, default_msg], eta=date)
-        remindObj.add_user(ctx.author.id)
+        remindObj.inc_user(ctx.author.id)
         return
     else:
-        remind.apply_async(args=[ctx.author.id, "<@"+str(ctx.author.id)+"> "+ msg], eta=date)
-        remindObj.add_user(ctx.author.id)
+        remind.apply_async(args=[ctx.author.id, "<@" + str(ctx.author.id) + "> " + msg], eta=date)
+        remindObj.inc_user(ctx.author.id)
+
 
 @remindat.error
 async def remindat_error(ctx, error):
@@ -350,3 +376,5 @@ if __name__ == '__main__':
         except Exception as e:
             print(e)
             time.sleep(60)
+
+# TODO switch reminder object to standalone that pulls and pushes to redis, have @check check against object, not redis
