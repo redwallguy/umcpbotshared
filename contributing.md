@@ -1,7 +1,7 @@
 
 #How to contribute
- So you want to contribute to UMCPBot? Great! Before you get started make sure you read through these guidelines.
- ## Getting Started
+So you want to contribute to UMCPBot? Great! Before you get started make sure you read through these guidelines.
+## Getting Started
 1. Fork the repo.
 2. Then clone the repo: `git clone git@github.com:your-username/umcpbotshared.git`
 3. Register a bot instance with the [Discord API](https://discordapp.com/developers/docs/intro "Discord API") (You will need this to test your changes).
