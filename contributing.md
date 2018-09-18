@@ -1,5 +1,5 @@
 
-#How to contribute
+# How to contribute
 So you want to contribute to UMCPBot? Great! Before you get started make sure you read through these guidelines.
 ## Getting Started
 1. Fork the repo.
