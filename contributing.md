@@ -16,3 +16,5 @@ So you want to contribute to UMCPBot? Great! Before you get started make sure yo
  ## Contributing
 Once you are all set up, start making changes! A good place to look for what you could help with is our [issues page](https://github.com/redwallguy/umcpbotshared/issues). If you instead plan to work on new functionality, please create a new issue first.
  After you are done with your code, push it to your fork and submit a [pull request](https://github.com/redwallguy/umcpbotshared/pull/new/exp)! When submitting, make sure you [reference which issue the pull request is for](https://blog.github.com/2013-05-14-closing-issues-via-pull-requests/). All pull requests should be done into the exp branch, as this is our active development branch.
+ ## Tests
+ Before you submit a pull request, make sure you have adequately tested your changes. Doing so will greatly reduce the amount of review and tweaking we have to do before merging potential changes.
