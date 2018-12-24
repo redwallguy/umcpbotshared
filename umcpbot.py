@@ -117,14 +117,15 @@ async def rolechan(ctx):
         return False
 
 
-@bot.command()
+@bot.command(aliases=["addgame"])
 @commands.check(rolechan)
-async def addgame(ctx, *games):
+async def addrole(ctx, *games):
     """
-    Adds game(s) to your roles.
+    Adds roles) to your roles.
 
-    Usage: !addgame game1 game2 ...
-    Maximum 10 games added at once
+    Usage: !addrole game1 game2 ...
+    Maximum 10 roles added at once.
+    If a role/game is more than one word, wrap it in quotes; e.g, !addgame "rocket league"
     """
     if len(games) == 0:
         await ctx.send("No game provided.")
@@ -145,14 +146,15 @@ async def addgame(ctx, *games):
         await ctx.send(retmsg)
 
 
-@bot.command()
+@bot.command(aliases=["removegame"])
 @commands.check(rolechan)
-async def removegame(ctx, *games):
+async def removerole(ctx, *games):
     """
-    Removes game(s) from your roles.
+    Removes role(s) from your roles.
 
-    Usage: !removegame game1 game2 ...
-    Maximum 10 games removed at once
+    Usage: !removerole game1 game2 ...
+    Maximum 10 roles removed at once.
+    If a role/game is more than one word, wrap it in quotes; e.g, !removegame "rocket league"
     """
     if len(games) == 0:
         await ctx.send("No game provided.")
@@ -177,7 +179,7 @@ async def removegame(ctx, *games):
 @commands.check(rolechan)
 async def addall(ctx):
     """
-    Adds all games to your roles.
+    Adds all roles to your roles.
     UNLIMITED POWAHHHH
     """
     for game in gameObj.get_games():
@@ -191,7 +193,7 @@ async def addall(ctx):
 @commands.check(rolechan)
 async def removeall(ctx):
     """
-    Removes all games from your roles.
+    Removes all roles from your roles.
     Et ego dabo vobis tabula rasa...
     """
     for game in gameObj.get_games():
@@ -203,11 +205,11 @@ async def removeall(ctx):
 
 @bot.command()
 @commands.check(rolechan)
-async def games(ctx):
+async def roles(ctx):
     """
-    Lists all games supported, as well as their aliases.
+    Lists all roles/games supported, as well as their aliases.
     """
-    gamemsg = "Games supported:\n--------------\n"
+    gamemsg = "Roles/Games supported:\n--------------\n"
     for game in sorted(gameObj.get_games()):
         gamemsg += game + " ["
         for ali in gameObj.get_games()[game]:
@@ -218,11 +220,11 @@ async def games(ctx):
 
 @bot.command()
 @commands.check(rolechan)
-async def mygames(ctx):
+async def myroles(ctx):
     """
-    Lists all games you are added to.
+    Lists all roles/games you are added to.
     """
-    gamemsg = "Your games\n-----------\n"
+    gamemsg = "Your roles/games\n-----------\n"
     for game in gameObj.get_games():
         if discord.utils.get(ctx.author.roles, name=game) is not None:
             gamemsg += game + "\n"
